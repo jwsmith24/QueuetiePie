@@ -34,7 +34,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass.set("queuetiepie.App")
+    mainClass.set("queuetiepie.Main")
 }
 
 tasks.named<Test>("test") {
