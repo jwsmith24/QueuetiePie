@@ -17,7 +17,9 @@ dependencies {
     // This dependency is used by the application.
     implementation("com.google.guava:guava:32.1.1-jre")
 
-    implementation("org.apache.poi:poi:3.9")
+    implementation("org.apache.poi:poi:5.2.5")
+
+    implementation("org.apache.poi:poi-ooxml:5.2.5")
 
     
 }
