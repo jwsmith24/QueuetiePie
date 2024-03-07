@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.LocalDateTime;
 import java.time.Duration;
 
@@ -43,14 +44,17 @@ private static Workbook readInWorkbook(String filePath) throws IOException {
         
 }
 
-
 private static void calculateBreaks(Workbook workbook) {
     Sheet sheet = workbook.getSheetAt(0);
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy H:mm");
+    Row prevRow = null;
 
-    for (int i = 1; i < sheet.getLastRowNum(); i++) { // Start from the second row
-        Row currentRow = sheet.getRow(i);
-        Cell currentCell = currentRow.getCell(0); // Assuming timestamp values are in the first column
+    for (Row currentRow : sheet) {
+        if (currentRow.getRowNum() <= 1) {
+            continue; // Skip the header and first row (employee clocking in)
+        }
+
+        Cell currentCell = currentRow.getCell(0); // Time stamp values are in the first column
 
         if (currentCell != null && currentCell.getCellType() == CellType.STRING) {
             String currentTimestampStr = currentCell.getStringCellValue();
@@ -58,8 +62,7 @@ private static void calculateBreaks(Workbook workbook) {
             try {
                 LocalDateTime currentDateTime = LocalDateTime.parse(currentTimestampStr, formatter);
 
-                if (i > 1) {
-                    Row prevRow = sheet.getRow(i - 1);
+                if (prevRow != null) {
                     Cell prevCell = prevRow.getCell(0);
 
                     if (prevCell != null && prevCell.getCellType() == CellType.STRING) {
@@ -74,15 +77,15 @@ private static void calculateBreaks(Workbook workbook) {
                         diffCell.setCellValue(minutesDifference);
                     }
                 }
-            } catch (Exception e) {
+
+                prevRow = currentRow; // Update prevRow for next iteration
+            } catch (DateTimeParseException e) {
                 // Handle invalid timestamp format
-                System.err.println("Invalid timestamp format at row " + (i + 1) + ": " + currentTimestampStr);
+                System.err.println("Invalid timestamp format at row " + (currentRow.getRowNum() + 1) + ": " + currentTimestampStr);
             }
         }
     }
 }
-
-
 
 private static void saveWorkbook(Workbook workbook, String filepath) throws IOException{ 
     try (FileOutputStream outputStream = new FileOutputStream(filepath)) {
