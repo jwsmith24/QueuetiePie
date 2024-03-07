@@ -8,7 +8,15 @@ public class Main {
 
         Queue queueOutput = new Queue();
 
-        queueOutput.writeToWorkbook();
+        try {
+            // queueOutput.readInFile();
+
+            queueOutput.writeToFile();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     
 }
