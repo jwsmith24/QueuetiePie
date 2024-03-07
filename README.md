@@ -1,2 +1,3 @@
 # QueuetiePie
-A simple app to process work queues.
+
+Processing work queues can be easy as pie!
