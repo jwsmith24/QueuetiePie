@@ -6,17 +6,15 @@ public class Main {
         System.out.println("Get ready to queue!");
 
 
-        Queue queueOutput = new Queue();
-
-        try {
-            // queueOutput.readInFile();
-
-            queueOutput.writeToFile();
+        ExcelHandler excelHandler = new ExcelHandler();
 
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        excelHandler.processExcel("workQueue.xlsx");
+
+
+
+
+      
     }
     
 }
