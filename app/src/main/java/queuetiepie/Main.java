@@ -9,7 +9,7 @@ public class Main {
         ExcelHandler excelHandler = new ExcelHandler();
 
 
-        excelHandler.processExcel("workQueue.xlsx");
+        excelHandler.processExcel("/home/jake/repos/QueuetiePie/app/workQueue.xlsx");
 
 
 

@@ -45,44 +45,43 @@ private static Workbook readInWorkbook(String filePath) throws IOException {
 
 
 private static void calculateBreaks(Workbook workbook) {
-
     Sheet sheet = workbook.getSheetAt(0);
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy H:mm");
 
-    // format the date/time parser
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/dd/yyyy HH:mm");
+    for (int i = 1; i < sheet.getLastRowNum(); i++) { // Start from the second row
+        Row currentRow = sheet.getRow(i);
+        Cell currentCell = currentRow.getCell(0); // Assuming timestamp values are in the first column
 
+        if (currentCell != null && currentCell.getCellType() == CellType.STRING) {
+            String currentTimestampStr = currentCell.getStringCellValue();
 
+            try {
+                LocalDateTime currentDateTime = LocalDateTime.parse(currentTimestampStr, formatter);
 
-    for (Row row : sheet) {
-        Cell cell1 = row.getCell(0); // Assuming datetime values are in the first column
-        
-        if (cell1 != null && cell1.getCellType() == CellType.STRING) {
-            int rowIndex = row.getRowNum();
-            String datetimeStr1 = cell1.getStringCellValue();
-            LocalDateTime dateTime1 = LocalDateTime.parse(datetimeStr1, formatter);
+                if (i > 1) {
+                    Row prevRow = sheet.getRow(i - 1);
+                    Cell prevCell = prevRow.getCell(0);
 
-            if (rowIndex > 0) {
-                Row prevRow = sheet.getRow(rowIndex - 1);
-                Cell prevCell = prevRow.getCell(0);
-               
-                if (prevCell != null && prevCell.getCellType() == CellType.STRING) {
-                    String datetimeStr2 = prevCell.getStringCellValue();
-                    LocalDateTime dateTime2 = LocalDateTime.parse(datetimeStr2, formatter);
+                    if (prevCell != null && prevCell.getCellType() == CellType.STRING) {
+                        String prevTimestampStr = prevCell.getStringCellValue();
+                        LocalDateTime prevDateTime = LocalDateTime.parse(prevTimestampStr, formatter);
 
-                    // Calculate the difference in minutes
-                    long minutesDifference = Duration.between(dateTime2, dateTime1).toMinutes();
+                        // Calculate the difference in minutes
+                        long minutesDifference = Duration.between(prevDateTime, currentDateTime).toMinutes();
 
-                    // Output the difference in the next column
-                    Cell diffCell = row.createCell(1);
-                    diffCell.setCellValue(minutesDifference);
+                        // Output the difference in the next column
+                        Cell diffCell = currentRow.createCell(1);
+                        diffCell.setCellValue(minutesDifference);
+                    }
                 }
+            } catch (Exception e) {
+                // Handle invalid timestamp format
+                System.err.println("Invalid timestamp format at row " + (i + 1) + ": " + currentTimestampStr);
             }
         }
     }
-
-    
-
 }
+
 
 
 private static void saveWorkbook(Workbook workbook, String filepath) throws IOException{ 
