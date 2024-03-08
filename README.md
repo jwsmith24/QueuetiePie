@@ -9,6 +9,12 @@ The program accepts an Excel spreadsheet with timestamps in the first column tha
 completed.
 
 It performs the following operations:
-- Inserts a column to the right .
+- Inserts a column to the right.
 - Calculates the amount of time between task completion.
 - Highlights values that are over a target threshold provided by the user.
+
+### Before Processing
+
+### After Processing
+
+
