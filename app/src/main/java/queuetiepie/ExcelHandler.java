@@ -59,7 +59,7 @@ public class ExcelHandler {
         ConditionalFormattingRule conditionalFormattingRule = sheet.getSheetConditionalFormatting()
                 .createConditionalFormattingRule(
                         ComparisonOperator.GT,
-                        "4.9",
+                        "5.9",
                         null
                 );
 
