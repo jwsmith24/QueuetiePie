@@ -9,7 +9,6 @@ public class Main {
 
         excelHandler.processExcel("/home/jake/repos/QueuetiePie/app/workQueue.xlsx");
 
-
     }
 
 }

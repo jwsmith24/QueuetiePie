@@ -25,6 +25,19 @@ public class ExcelHandler {
 
     }
 
+    /**
+     * Format cell to ensure it's always a string.
+     * @param cell current cell ref to format
+     * @return formatted cell
+     */
+    private static Cell getFormattedDateCell(Cell cell) {
+        DataFormatter dataFormatter = new DataFormatter();
+        String stringValue = dataFormatter.formatCellValue(cell);
+        cell.setCellValue(stringValue);
+
+        return cell;
+    }
+
     private static void calculateBreaks(Workbook workbook) {
         Sheet sheet = workbook.getSheetAt(0);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy H:mm");
@@ -35,13 +48,7 @@ public class ExcelHandler {
                 continue; // Skip the header and first row (employee clocking in)
             }
 
-            Cell currentCell = currentRow.getCell(0); // Time stamp values are in the first column
-
-            DataFormatter dataFormatter = new DataFormatter();
-
-            String stringValue = dataFormatter.formatCellValue(currentCell);
-
-            currentCell.setCellValue(stringValue);
+            Cell currentCell = getFormattedDateCell(currentRow.getCell(TARGET_COLUMN_INDEX));
 
 
             if (currentCell.getCellType() == CellType.STRING) {
@@ -124,7 +131,6 @@ public class ExcelHandler {
     public void processExcel(String filePath) {
 
         try {
-
             Workbook workbook = readInWorkbook(filePath);
             addColumn(workbook);
             calculateBreaks(workbook);
