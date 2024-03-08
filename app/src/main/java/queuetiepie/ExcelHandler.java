@@ -33,14 +33,24 @@ public class ExcelHandler {
     private static Cell getFormattedDateCell(Cell cell) {
         DataFormatter dataFormatter = new DataFormatter();
         String stringValue = dataFormatter.formatCellValue(cell);
+
         cell.setCellValue(stringValue);
 
         return cell;
     }
 
+    private static Cell formatCellAsNumber(Cell cell) {
+        DataFormatter dataFormatter = new DataFormatter();
+        String stringValue = dataFormatter.formatCellValue(cell);
+
+        cell.setCellValue(stringValue);
+        return cell;
+    }
+
     private static void calculateBreaks(Workbook workbook) {
         Sheet sheet = workbook.getSheetAt(0);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy H:mm");
+        // Set expected date format
+
         Row prevRow = null;
 
         for (Row currentRow : sheet) {
@@ -48,41 +58,58 @@ public class ExcelHandler {
                 continue; // Skip the header and first row (employee clocking in)
             }
 
-            Cell currentCell = getFormattedDateCell(currentRow.getCell(TARGET_COLUMN_INDEX));
+            Cell currentCell = getFormattedDateCell(currentRow.getCell(0));
 
-
+            // Ensure cell was properly formatted to type STRING.
             if (currentCell.getCellType() == CellType.STRING) {
+                // Grab the time stamp to work with
                 String currentTimestampStr = currentCell.getStringCellValue();
 
+                calculateTimeDifference(currentTimestampStr, prevRow, currentRow);
 
-                try {
-                    LocalDateTime currentDateTime = LocalDateTime.parse(currentTimestampStr, formatter);
 
-                    if (prevRow != null) {
-                        Cell prevCell = prevRow.getCell(0);
+                prevRow = currentRow; // Update prevRow for next iteration
 
-                        if (prevCell != null && prevCell.getCellType() == CellType.STRING) {
-                            String prevTimestampStr = prevCell.getStringCellValue();
-                            LocalDateTime prevDateTime = LocalDateTime.parse(prevTimestampStr, formatter);
-
-                            // Calculate the difference in minutes
-                            long minutesDifference = Duration.between(prevDateTime, currentDateTime).toMinutes();
-
-                            // Output the difference in the next column
-                            Cell diffCell = currentRow.createCell(1);
-                            diffCell.setCellValue(minutesDifference);
-                        }
-                    }
-
-                    prevRow = currentRow; // Update prevRow for next iteration
-                } catch (DateTimeParseException e) {
-                    // Handle invalid timestamp format
-                    System.err.println("Invalid timestamp format at row " + (currentRow.getRowNum() + 1)
-                            + ": " + currentTimestampStr);
                 }
             }
         }
+
+    /**
+     * Parse timestamps for current and previous rows, calculate the difference, and add to the target column.
+     */
+    private static void calculateTimeDifference(String timestamp, Row prevRow, Row currentRow) {
+        // Set date format
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy H:mm");
+
+        try {
+            LocalDateTime currentDateTime = LocalDateTime.parse(timestamp, formatter);
+
+            if (prevRow != null) {
+                Cell prevCell = prevRow.getCell(0);
+
+                if (prevCell != null) {
+                    String prevTimestampStr = prevCell.getStringCellValue();
+                    LocalDateTime prevDateTime = LocalDateTime.parse(prevTimestampStr, formatter);
+
+                    // Calculate the difference in minutes
+                    long minutesDifference = Duration.between(prevDateTime, currentDateTime).toMinutes();
+
+                    // Output the difference in the target column
+                    Cell diffCell = currentRow.createCell(TARGET_COLUMN_INDEX);
+                    diffCell.setCellValue(minutesDifference);
+                }
+            }
+
+        } catch (DateTimeParseException e) {
+            // Handle invalid timestamp format
+            System.err.println("Invalid timestamp format at row " + (currentRow.getRowNum() + 1)
+                    + ": " + timestamp);
+        }
     }
+
+
+
+
 
     /**
      * Writes workbook back to .xlsx in the target directory.
