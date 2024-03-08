@@ -1,6 +1,8 @@
 package queuetiepie;
 
+
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,6 +17,13 @@ public class ExcelHandler {
 
     private static final int TARGET_COLUMN_INDEX = 1;
 
+    /**
+     * Reads in target xls/xlsx file in to be processed.
+     *
+     * @param filePath target filepath
+     * @return workbook object
+     * @throws IOException if filepath is unreachable
+     */
     private static Workbook readInWorkbook(String filePath) throws IOException {
 
 
@@ -27,6 +36,7 @@ public class ExcelHandler {
 
     /**
      * Format cell to ensure it's always a string.
+     *
      * @param cell current cell ref to format
      * @return formatted cell
      */
@@ -39,18 +49,43 @@ public class ExcelHandler {
         return cell;
     }
 
-    private static Cell formatCellAsNumber(Cell cell) {
-        DataFormatter dataFormatter = new DataFormatter();
-        String stringValue = dataFormatter.formatCellValue(cell);
+    /**
+     * Adds conditional formatting rule to the target column.
+     *
+     * @param sheet ref to active sheet
+     */
+    private static void applyConditionalFormatting(Sheet sheet) {
+        // Create conditional formatting rule
+        ConditionalFormattingRule conditionalFormattingRule = sheet.getSheetConditionalFormatting()
+                .createConditionalFormattingRule(
+                        ComparisonOperator.GT,
+                        "4.9",
+                        null
+                );
 
-        cell.setCellValue(stringValue);
-        return cell;
+        // Describe the style to apply if condition is met
+        PatternFormatting patternFormatting = conditionalFormattingRule.createPatternFormatting();
+        patternFormatting.setFillBackgroundColor(IndexedColors.RED.getIndex());
+
+        // Define the region the conditional formatting will apply to
+        CellRangeAddress[] regions = {
+                CellRangeAddress.valueOf("B1:B1000")
+        };
+
+        // Add the rule to the cell range
+        sheet.getSheetConditionalFormatting()
+                .addConditionalFormatting(regions, conditionalFormattingRule);
+
     }
 
-    private static void calculateBreaks(Workbook workbook) {
-        Sheet sheet = workbook.getSheetAt(0);
-        // Set expected date format
 
+    /**
+     * Executes adding the calculated processing times to the target cell.
+     *
+     * @param workbook ref to current workbook
+     */
+    private static void calculateProcessingTime(Workbook workbook) {
+        Sheet sheet = workbook.getSheetAt(0);
         Row prevRow = null;
 
         for (Row currentRow : sheet) {
@@ -58,21 +93,21 @@ public class ExcelHandler {
                 continue; // Skip the header and first row (employee clocking in)
             }
 
+            // Format cell to STRING
             Cell currentCell = getFormattedDateCell(currentRow.getCell(0));
 
-            // Ensure cell was properly formatted to type STRING.
+            // Ensure cell was properly formatted to STRING
             if (currentCell.getCellType() == CellType.STRING) {
                 // Grab the time stamp to work with
                 String currentTimestampStr = currentCell.getStringCellValue();
-
+                // Perform calculation and insert result to target cell
                 calculateTimeDifference(currentTimestampStr, prevRow, currentRow);
-
-
-                prevRow = currentRow; // Update prevRow for next iteration
-
-                }
+                // Update prevRow for next iteration
+                prevRow = currentRow;
             }
+
         }
+    }
 
     /**
      * Parse timestamps for current and previous rows, calculate the difference, and add to the target column.
@@ -107,10 +142,6 @@ public class ExcelHandler {
         }
     }
 
-
-
-
-
     /**
      * Writes workbook back to .xlsx in the target directory.
      *
@@ -140,6 +171,7 @@ public class ExcelHandler {
             if (row == null) {
                 continue; // Skip if row is null
             }
+
             // Shift existing cells to the right to make space for the new column
             for (int j = row.getLastCellNum(); j > ExcelHandler.TARGET_COLUMN_INDEX; j--) {
                 Cell cell = row.getCell(j - 1);
@@ -155,20 +187,24 @@ public class ExcelHandler {
         }
     }
 
+    /**
+     * Process the given spreadsheet to add a column with the calculated times between completed tasks.
+     *
+     * @param filePath filepath of the target spreadsheet
+     */
     public void processExcel(String filePath) {
 
         try {
             Workbook workbook = readInWorkbook(filePath);
             addColumn(workbook);
-            calculateBreaks(workbook);
+            calculateProcessingTime(workbook);
+            applyConditionalFormatting(workbook.getSheetAt(0));
             saveWorkbook(workbook, filePath);
 
         } catch (IOException e) {
             System.out.println("Workbook could not be modified");
 
         }
-
-
     }
 
 }
