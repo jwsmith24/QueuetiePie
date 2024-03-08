@@ -11,7 +11,7 @@ completed.
 It performs the following operations:
 - Inserts a column to the right.
 - Calculates the amount of time between task completion.
-- Highlights values that are over a target threshold provided by the user.
+- Applies conditional formatting rule to highlight values that are over a target threshold.
 
 ### Before Processing
 
