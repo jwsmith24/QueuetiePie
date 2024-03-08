@@ -1,7 +1,6 @@
 package queuetiepie;
 
 public class Employee {
-
     String name;
     float totalBreakTime;
 
@@ -10,5 +9,7 @@ public class Employee {
         this.name = name;
         this.totalBreakTime = totalBreakTime;
     }
+
+
     
 }

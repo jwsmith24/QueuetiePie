@@ -21,12 +21,13 @@ private static final int TARGET_COLUMN_INDEX = 1;
         try {
 
             Workbook workbook = readInWorkbook(filePath);
-            addColumn(workbook, TARGET_COLUMN_INDEX);
+            addColumn(workbook);
             calculateBreaks(workbook);
             saveWorkbook(workbook, filePath);
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Workbook could not be modified");
+
         }
         
 
@@ -39,7 +40,11 @@ private static Workbook readInWorkbook(String filePath) throws IOException {
 
     try (FileInputStream inputStream = new FileInputStream(filePath)) {
 
-        return WorkbookFactory.create(inputStream);
+        Workbook workbook = WorkbookFactory.create(inputStream);
+
+
+
+        return workbook;
     }
         
 }
@@ -56,8 +61,16 @@ private static void calculateBreaks(Workbook workbook) {
 
         Cell currentCell = currentRow.getCell(0); // Time stamp values are in the first column
 
-        if (currentCell != null && currentCell.getCellType() == CellType.STRING) {
+        DataFormatter dataFormatter = new DataFormatter();
+
+        String stringValue = dataFormatter.formatCellValue(currentCell);
+
+        currentCell.setCellValue(stringValue);
+
+
+        if (currentCell.getCellType() == CellType.STRING) {
             String currentTimestampStr = currentCell.getStringCellValue();
+
 
             try {
                 LocalDateTime currentDateTime = LocalDateTime.parse(currentTimestampStr, formatter);
@@ -81,7 +94,8 @@ private static void calculateBreaks(Workbook workbook) {
                 prevRow = currentRow; // Update prevRow for next iteration
             } catch (DateTimeParseException e) {
                 // Handle invalid timestamp format
-                System.err.println("Invalid timestamp format at row " + (currentRow.getRowNum() + 1) + ": " + currentTimestampStr);
+                System.err.println("Invalid timestamp format at row " + (currentRow.getRowNum() + 1)
+                        + ": " + currentTimestampStr);
             }
         }
     }
@@ -90,13 +104,12 @@ private static void calculateBreaks(Workbook workbook) {
 private static void saveWorkbook(Workbook workbook, String filepath) throws IOException{ 
     try (FileOutputStream outputStream = new FileOutputStream(filepath)) {
         workbook.write(outputStream);
-        workbook.close();
         
     }
 }
 
 
-private static void addColumn(Workbook workbook, int columnIndex) {
+private static void addColumn(Workbook workbook) {
     
     Sheet sheet = workbook.getSheetAt(0); // Assuming first sheet
         
@@ -107,7 +120,7 @@ private static void addColumn(Workbook workbook, int columnIndex) {
                 continue; // Skip if row is null
             }
             // Shift existing cells to the right to make space for the new column
-            for (int j = row.getLastCellNum(); j > columnIndex; j--) {
+            for (int j = row.getLastCellNum(); j > ExcelHandler.TARGET_COLUMN_INDEX; j--) {
                 Cell cell = row.getCell(j - 1);
                 if (cell != null) {
                     row.createCell(j);
@@ -116,8 +129,8 @@ private static void addColumn(Workbook workbook, int columnIndex) {
             }
 
             // Add the new cell at the desired column index
-            row.createCell(columnIndex);
-            row.getCell(columnIndex).setCellValue(""); 
+            row.createCell(ExcelHandler.TARGET_COLUMN_INDEX);
+            row.getCell(ExcelHandler.TARGET_COLUMN_INDEX).setCellValue("");
         }
 }
 
